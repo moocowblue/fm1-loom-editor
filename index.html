@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOOM-8 Web Editor · M-VAVE FM-1</title>
+  <meta name="description" content="Professional Web MIDI Editor and Screen Mirror for the M-VAVE FM-1 running Loom-8 firmware by Charles Vestal.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ====================================================================
+       1. GLOBAL HEADER & TOOLBAR
+       ==================================================================== -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        LOOM<span style="color:var(--accent-orange)">8</span>
+        <span class="brand-badge">WEB EDITOR</span>
+      </div>
+      <div class="hardware-tag">M-VAVE FM-1 GROOVEBOX</div>
+    </div>
+
+    <!-- MIDI Connection Controls -->
+    <div class="connection-toolbar">
+      <div class="status-indicator">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="connection-status-text">Disconnected</span>
+      </div>
+
+      <div class="midi-traffic-leds">
+        <div class="traffic-pill">
+          <span class="mini-led rx" id="led-rx"></span>
+          <span>RX</span>
+        </div>
+        <div class="traffic-pill">
+          <span class="mini-led tx" id="led-tx"></span>
+          <span>TX</span>
+        </div>
+      </div>
+
+      <div class="midi-select-group">
+        <label for="select-midi-in">IN:</label>
+        <select id="select-midi-in" title="MIDI Input Port"></select>
+      </div>
+
+      <div class="midi-select-group">
+        <label for="select-midi-out">OUT:</label>
+        <select id="select-midi-out" title="MIDI Output Port"></select>
+      </div>
+
+      <button class="btn-header primary" id="btn-connect">Connect</button>
+      <button class="btn-header" id="btn-mock-mode" title="Audition sounds & edit without physical device">Demo Mode</button>
+    </div>
+  </header>
+
+  <!-- ====================================================================
+       2. NAVIGATION TABS
+       ==================================================================== -->
+  <nav class="nav-tabs-bar" role="tablist">
+    <button class="nav-tab active" data-target="tab-mixer">🎛️ 8-Track Mixer</button>
+    <button class="nav-tab" data-target="tab-track-detail">🎹 Sound & Synth Engines</button>
+    <button class="nav-tab" data-target="tab-drum-studio">🥁 Drum Kit Studio</button>
+    <button class="nav-tab" data-target="tab-master-fx">🎚️ Master & FX Rack</button>
+    <button class="nav-tab" data-target="tab-scenes">🎬 32 Scenes Matrix</button>
+    <button class="nav-tab" data-target="tab-hardware-mirror">📱 Virtual FM-1 & Screen Mirror</button>
+    <button class="nav-tab" data-target="tab-presets">💾 Projects & Presets</button>
+    <button class="nav-tab" data-target="tab-midi-monitor">📊 MIDI Monitor</button>
+  </nav>
+
+  <!-- ====================================================================
+       3. MAIN CONTENT TABS
+       ==================================================================== -->
+  <main class="app-container">
+
+    <!-- TAB 1: 8-TRACK MIXER -->
+    <section class="tab-pane active" id="tab-mixer">
+      <div class="mixer-grid" id="mixer-grid">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- TAB 2: TRACK SOUND & SYNTH ENGINES -->
+    <section class="tab-pane" id="tab-track-detail">
+      <div class="editor-layout">
+        <!-- Track selector bar -->
+        <div class="editor-track-selector-bar" id="editor-track-pills">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="engine-control-deck">
+          <!-- Module 1: Engine & Parameters -->
+          <div class="deck-module">
+            <div class="module-title-bar">
+              <span class="module-title">⚙️ SYNTH ENGINE</span>
+              <span class="module-badge">PAGE 1 & 2</span>
+            </div>
+
+            <div style="display:flex; gap:10px; align-items:center;">
+              <label style="font-size:12px; font-weight:600; color:var(--text-muted);">TYPE:</label>
+              <select id="engine-select" style="flex:1; background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-subtle); padding:6px; border-radius:var(--radius-sm); font-size:13px;" onchange="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].engine = parseInt(this.value); window.editorApp.updateTrackDetailUI(); window.editorApp.buildMixerChannels();">
+                <option value="0">Knit (Subtractive Supersaw)</option>
+                <option value="1">Rayon (2-Operator FM Synth)</option>
+                <option value="2">Jacquard (Wavetable Synth)</option>
+                <option value="3">Bellows (Organ & Drawbars)</option>
+                <option value="4">Cane (Braids Physical Modeling)</option>
+                <option value="5">Voile (Braids Vocal Synthesis)</option>
+                <option value="6">Sample (Bank Sample Player)</option>
+                <option value="7">Slice (Breakbeat Chopper)</option>
+                <option value="8">Kit (11-Voice Drumline)</option>
+              </select>
+            </div>
+
+            <div class="module-grid-4">
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-k1-label">E1</span>
+                <input type="range" min="0" max="127" value="64" id="eng-k1" style="width:100%; accent-color:var(--accent-orange);">
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-k2-label">E2</span>
+                <input type="range" min="0" max="127" value="64" id="eng-k2" style="width:100%; accent-color:var(--accent-orange);">
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-k3-label">E3</span>
+                <input type="range" min="0" max="127" value="64" id="eng-k3" style="width:100%; accent-color:var(--accent-orange);">
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-k4-label">E4</span>
+                <input type="range" min="0" max="127" value="64" id="eng-k4" style="width:100%; accent-color:var(--accent-orange);">
+              </div>
+            </div>
+
+            <!-- Page 2 (X1-X4) -->
+            <div class="module-grid-4" style="border-top:1px dashed var(--border-subtle); padding-top:10px;">
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-x1-label">X1</span>
+                <input type="range" min="0" max="127" value="64" id="eng-x1" style="width:100%; accent-color:var(--accent-teal);">
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-x2-label">X2</span>
+                <input type="range" min="0" max="127" value="64" id="eng-x2" style="width:100%; accent-color:var(--accent-teal);">
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-x3-label">X3</span>
+                <input type="range" min="0" max="127" value="64" id="eng-x3" style="width:100%; accent-color:var(--accent-teal);">
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label" id="eng-x4-label">X4</span>
+                <input type="range" min="0" max="127" value="64" id="eng-x4" style="width:100%; accent-color:var(--accent-teal);">
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 2: Amp ADSR Envelope -->
+          <div class="deck-module">
+            <div class="module-title-bar">
+              <span class="module-title">📈 AMP ENVELOPE</span>
+              <span class="module-badge">CC 73, 75, 72</span>
+            </div>
+
+            <div class="interactive-curve-box">
+              <canvas id="adsr-canvas" width="300" height="90"></canvas>
+            </div>
+
+            <div class="module-grid-4">
+              <div class="rotary-group">
+                <span class="rotary-label">ATTACK (CC 73)</span>
+                <input type="range" min="0" max="127" value="5" id="synth-attack" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].attack = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 73, this.value); window.editorApp.drawAdsrCurve();">
+                <span class="rotary-value-text" id="synth-attack-val">5</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">DECAY (CC 75)</span>
+                <input type="range" min="0" max="127" value="40" id="synth-decay" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].decay = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 75, this.value); window.editorApp.drawAdsrCurve();">
+                <span class="rotary-value-text" id="synth-decay-val">40</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">SUSTAIN</span>
+                <input type="range" min="0" max="127" value="64" id="synth-sustain" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].sustain = parseInt(this.value); window.editorApp.drawAdsrCurve();">
+                <span class="rotary-value-text" id="synth-sustain-val">64</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">RELEASE (CC 72)</span>
+                <input type="range" min="0" max="127" value="25" id="synth-release" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].release = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 72, this.value); window.editorApp.drawAdsrCurve();">
+                <span class="rotary-value-text" id="synth-release-val">25</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 3: Filter & Filter ADSR -->
+          <div class="deck-module">
+            <div class="module-title-bar">
+              <span class="module-title">🎚️ STATE-VARIABLE FILTER</span>
+              <span class="module-badge">CC 74, 71</span>
+            </div>
+
+            <div class="interactive-curve-box">
+              <canvas id="filter-canvas" width="300" height="90"></canvas>
+            </div>
+
+            <div class="module-grid-4">
+              <div class="rotary-group">
+                <span class="rotary-label">CUTOFF (CC 74)</span>
+                <input type="range" min="0" max="127" value="90" id="filter-cutoff" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].cutoff = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 74, this.value); window.editorApp.drawFilterCurve();">
+                <span class="rotary-value-text" id="filter-cutoff-val">90</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">RESO (CC 71)</span>
+                <input type="range" min="0" max="127" value="30" id="filter-reso" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].resonance = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 71, this.value); window.editorApp.drawFilterCurve();">
+                <span class="rotary-value-text" id="filter-reso-val">30</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">LOW CUT (CC 14)</span>
+                <input type="range" min="0" max="127" value="0" id="filter-locut" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].locut = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 14, this.value);">
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">HI CUT (CC 15)</span>
+                <input type="range" min="0" max="127" value="127" id="filter-hicut" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].hicut = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 15, this.value);">
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 4: Character Stage (Voice Saturation/FX) -->
+          <div class="deck-module">
+            <div class="module-title-bar">
+              <span class="module-title">✨ CHARACTER STAGE</span>
+              <span class="module-badge">VOICE SHAPER</span>
+            </div>
+
+            <div class="interactive-curve-box">
+              <canvas id="char-canvas" width="300" height="90"></canvas>
+            </div>
+
+            <div class="module-grid-4">
+              <div class="rotary-group">
+                <span class="rotary-label">TYPE</span>
+                <select id="char-type" style="width:100%; background:var(--bg-input); color:var(--text-main); font-size:11px; padding:3px; border:1px solid var(--border-subtle);" onchange="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].charType = parseInt(this.value); window.editorApp.drawCharCurve();">
+                  <option value="0">Off</option>
+                  <option value="1">Soft Drive</option>
+                  <option value="2">Wavefolder</option>
+                  <option value="3">Bitcrush</option>
+                  <option value="4">Ring Mod</option>
+                  <option value="5">Tilt EQ</option>
+                  <option value="6">Worn Tape</option>
+                  <option value="7">Sampler</option>
+                </select>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">AMOUNT</span>
+                <input type="range" min="0" max="127" value="0" id="char-amt" style="width:100%; accent-color:var(--accent-yellow);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].charAmt = parseInt(this.value); window.editorApp.drawCharCurve();">
+                <span class="rotary-value-text" id="char-amt-val">0</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">TONE</span>
+                <input type="range" min="0" max="127" value="64" id="char-tone" style="width:100%; accent-color:var(--accent-yellow);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].charTone = parseInt(this.value); window.editorApp.drawCharCurve();">
+                <span class="rotary-value-text" id="char-tone-val">64</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">MIX</span>
+                <input type="range" min="0" max="127" value="0" id="char-mix" style="width:100%; accent-color:var(--accent-yellow);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].charMix = parseInt(this.value); window.editorApp.drawCharCurve();">
+                <span class="rotary-value-text" id="char-mix-val">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 5: LFO Modulation -->
+          <div class="deck-module">
+            <div class="module-title-bar">
+              <span class="module-title">〰️ LFO MODULATION</span>
+              <span class="module-badge">CC 1</span>
+            </div>
+
+            <div class="module-grid-4" style="margin-top:10px;">
+              <div class="rotary-group">
+                <span class="rotary-label">TYPE</span>
+                <select id="lfo-type" style="width:100%; background:var(--bg-input); color:var(--text-main); font-size:11px; padding:3px; border:1px solid var(--border-subtle);" onchange="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].lfoType = parseInt(this.value);">
+                  <option value="0">Off</option>
+                  <option value="1">Wave (Poly)</option>
+                  <option value="2">Wobble</option>
+                  <option value="3">Drift</option>
+                  <option value="4">Pump</option>
+                </select>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">SPEED / SYNC</span>
+                <input type="range" min="0" max="127" value="4" id="lfo-speed" style="width:100%; accent-color:var(--accent-purple);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].lfoSpeed = parseInt(this.value);">
+                <span class="rotary-value-text" id="lfo-speed-val">1/8</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">AMOUNT (CC 1)</span>
+                <input type="range" min="0" max="127" value="0" id="lfo-amt" style="width:100%; accent-color:var(--accent-purple);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].lfoAmt = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 1, this.value);">
+                <span class="rotary-value-text" id="lfo-amt-val">0</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">DESTINATION</span>
+                <select id="lfo-dest" style="width:100%; background:var(--bg-input); color:var(--text-main); font-size:11px; padding:3px; border:1px solid var(--border-subtle);">
+                  <option value="0">Synth Engine</option>
+                  <option value="1">Envelope</option>
+                  <option value="2">Filter</option>
+                  <option value="3">Voice Amp</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 6: Play Mode & Performance -->
+          <div class="deck-module">
+            <div class="module-title-bar">
+              <span class="module-title">⚡ PLAY & PERFORMANCE</span>
+              <span class="module-badge">CC 5 (GLIDE)</span>
+            </div>
+
+            <div class="module-grid-4" style="margin-top:10px;">
+              <div class="rotary-group">
+                <span class="rotary-label">VOICE MODE</span>
+                <select id="play-vmode" style="width:100%; background:var(--bg-input); color:var(--text-main); font-size:11px; padding:3px; border:1px solid var(--border-subtle);">
+                  <option value="0">Polyphonic</option>
+                  <option value="1">Monophonic</option>
+                  <option value="2">Legato</option>
+                </select>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">GLIDE (CC 5)</span>
+                <input type="range" min="0" max="127" value="0" id="play-glide" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.tracks[window.editorApp.state.selectedTrack].porta = parseInt(this.value); window.editorApp.midi.sendCC(window.editorApp.state.selectedTrack, 5, this.value);">
+                <span class="rotary-value-text" id="play-glide-val">0</span>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">OCTAVE SHIFT</span>
+                <select id="play-octave" style="width:100%; background:var(--bg-input); color:var(--text-main); font-size:11px; padding:3px; border:1px solid var(--border-subtle);">
+                  <option value="0">-2 Octaves</option>
+                  <option value="1">-1 Octave</option>
+                  <option value="2" selected>Normal (0)</option>
+                  <option value="3">+1 Octave</option>
+                  <option value="4">+2 Octaves</option>
+                </select>
+              </div>
+              <div class="rotary-group">
+                <span class="rotary-label">PLAYER</span>
+                <select id="play-player" style="width:100%; background:var(--bg-input); color:var(--text-main); font-size:11px; padding:3px; border:1px solid var(--border-subtle);">
+                  <option value="0">Off</option>
+                  <option value="1">Arpeggiator</option>
+                  <option value="2">Strummer</option>
+                  <option value="3">Chord Hold</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: DRUM KIT STUDIO -->
+    <section class="tab-pane" id="tab-drum-studio">
+      <div class="drum-studio-layout">
+        <!-- 11 Pads Grid -->
+        <div class="deck-module">
+          <div class="module-title-bar">
+            <span class="module-title">🥁 11 DRUMLINE SOUND PADS</span>
+            <span class="module-badge">BLACK KEYS &bull; CC 16-26, 80-90, 102-112</span>
+          </div>
+
+          <div class="drum-pads-grid" id="drum-pads-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Kit Bus Master & Dynamics -->
+        <div class="deck-module">
+          <div class="module-title-bar">
+            <span class="module-title">🎚️ KIT BUS & DYNAMIC FILTER</span>
+            <span class="module-badge">TRACK 1</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="rotary-group">
+              <span class="rotary-label">BUS HIGH CUT (CC 74)</span>
+              <input type="range" min="0" max="127" value="127" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(0, 74, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">BUS LOW CUT (CC 71)</span>
+              <input type="range" min="0" max="127" value="0" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(0, 71, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">KIT ATTACK (CC 73)</span>
+              <input type="range" min="0" max="127" value="0" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(0, 73, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">KIT LENGTH / RELEASE (CC 72)</span>
+              <input type="range" min="0" max="127" value="64" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(0, 72, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">KIT MASTER SEND I (CC 91)</span>
+              <input type="range" min="0" max="127" value="64" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(0, 91, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">KIT MASTER SEND II (CC 93)</span>
+              <input type="range" min="0" max="127" value="64" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(0, 93, this.value);">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: MASTER & FX RACK -->
+    <section class="tab-pane" id="tab-master-fx">
+      <div class="master-rack-grid">
+        <!-- FX I Card (Channel 9) -->
+        <div class="fx-card">
+          <div class="module-title-bar">
+            <span class="module-title">✨ SEND FX I</span>
+            <span class="module-badge">MIDI CHANNEL 9</span>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted);">ALGORITHM:</label>
+            <select id="fx1-pick" style="flex:1; background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-subtle); padding:6px; border-radius:var(--radius-sm);"></select>
+          </div>
+
+          <div class="module-grid-4">
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx1-k1-label">KNOB 1 (CC 16)</span>
+              <input type="range" min="0" max="127" value="64" id="fx1-k1" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(8, 16, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx1-k2-label">KNOB 2 (CC 17)</span>
+              <input type="range" min="0" max="127" value="64" id="fx1-k2" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(8, 17, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx1-k3-label">KNOB 3 (CC 18)</span>
+              <input type="range" min="0" max="127" value="64" id="fx1-k3" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(8, 18, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx1-k4-label">KNOB 4 (CC 19)</span>
+              <input type="range" min="0" max="127" value="64" id="fx1-k4" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(8, 19, this.value);">
+            </div>
+          </div>
+
+          <div class="module-grid-4" style="border-top:1px dashed var(--border-subtle); padding-top:10px;">
+            <div class="rotary-group">
+              <span class="rotary-label">RETURN LEVEL (CC 7)</span>
+              <input type="range" min="0" max="127" value="90" id="fx1-level" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(8, 7, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">LOW-PASS (CC 74)</span>
+              <input type="range" min="0" max="127" value="127" id="fx1-cut" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(8, 74, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">HIGH-PASS (CC 75)</span>
+              <input type="range" min="0" max="127" value="0" id="fx1-hp" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(8, 75, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">FEED FX II (CC 93)</span>
+              <input type="range" min="0" max="127" value="25" id="fx1-feed2" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(8, 93, this.value);">
+            </div>
+          </div>
+        </div>
+
+        <!-- FX II Card (Channel 10) -->
+        <div class="fx-card">
+          <div class="module-title-bar">
+            <span class="module-title">✨ SEND FX II</span>
+            <span class="module-badge">MIDI CHANNEL 10</span>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted);">ALGORITHM:</label>
+            <select id="fx2-pick" style="flex:1; background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-subtle); padding:6px; border-radius:var(--radius-sm);"></select>
+          </div>
+
+          <div class="module-grid-4">
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx2-k1-label">KNOB 1 (CC 16)</span>
+              <input type="range" min="0" max="127" value="64" id="fx2-k1" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(9, 16, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx2-k2-label">KNOB 2 (CC 17)</span>
+              <input type="range" min="0" max="127" value="64" id="fx2-k2" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(9, 17, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx2-k3-label">KNOB 3 (CC 18)</span>
+              <input type="range" min="0" max="127" value="64" id="fx2-k3" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(9, 18, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label" id="fx2-k4-label">KNOB 4 (CC 19)</span>
+              <input type="range" min="0" max="127" value="64" id="fx2-k4" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.midi.sendCC(9, 19, this.value);">
+            </div>
+          </div>
+
+          <div class="module-grid-4" style="border-top:1px dashed var(--border-subtle); padding-top:10px;">
+            <div class="rotary-group">
+              <span class="rotary-label">RETURN LEVEL (CC 7)</span>
+              <input type="range" min="0" max="127" value="90" id="fx2-level" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(9, 7, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">LOW-PASS (CC 74)</span>
+              <input type="range" min="0" max="127" value="127" id="fx2-cut" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(9, 74, this.value);">
+            </div>
+            <div class="rotary-group">
+              <span class="rotary-label">HIGH-PASS (CC 75)</span>
+              <input type="range" min="0" max="127" value="0" id="fx2-hp" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.midi.sendCC(9, 75, this.value);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Section (Channel 11) -->
+        <div class="master-bus-panel">
+          <div class="module-title-bar">
+            <span class="module-title">🎛️ MASTER BUS PROCESSOR</span>
+            <span class="module-badge">MIDI CHANNEL 11</span>
+          </div>
+
+          <!-- EQ Spectrum Canvas -->
+          <div class="spectrum-preview-box">
+            <canvas id="master-spectrum-canvas" width="600" height="120"></canvas>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
+            <!-- 3-Band EQ -->
+            <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md);">
+              <h4 style="font-size:12px; font-weight:700; margin-bottom:10px; color:var(--accent-teal);">3-BAND EQ</h4>
+              <div class="module-grid-4">
+                <div class="rotary-group">
+                  <span class="rotary-label">LOW (CC 16)</span>
+                  <input type="range" min="0" max="127" value="64" id="master-eq-lo" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.state.master.eqLo = parseInt(this.value); window.editorApp.midi.sendCC(10, 16, this.value); window.editorApp.drawMasterSpectrum();">
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">MID (CC 17)</span>
+                  <input type="range" min="0" max="127" value="64" id="master-eq-mid" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.state.master.eqMid = parseInt(this.value); window.editorApp.midi.sendCC(10, 17, this.value); window.editorApp.drawMasterSpectrum();">
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">HIGH (CC 18)</span>
+                  <input type="range" min="0" max="127" value="64" id="master-eq-hi" style="width:100%; accent-color:var(--accent-teal);" oninput="window.editorApp.state.master.eqHi = parseInt(this.value); window.editorApp.midi.sendCC(10, 18, this.value); window.editorApp.drawMasterSpectrum();">
+                </div>
+              </div>
+            </div>
+
+            <!-- Master Color -->
+            <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md);">
+              <h4 style="font-size:12px; font-weight:700; margin-bottom:10px; color:var(--accent-orange);">MASTER COLOR</h4>
+              <div class="module-grid-4">
+                <div class="rotary-group">
+                  <span class="rotary-label">TYPE (CC 20)</span>
+                  <select id="master-color-type" style="width:100%; background:var(--bg-input); color:var(--text-main); font-size:11px; padding:3px; border:1px solid var(--border-subtle);" onchange="window.editorApp.state.master.colorType = parseInt(this.value); window.editorApp.midi.sendCC(10, 20, this.value);">
+                    <option value="0">Off</option>
+                    <option value="1">Tape</option>
+                    <option value="2">Sampler</option>
+                  </select>
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">AMOUNT (CC 21)</span>
+                  <input type="range" min="0" max="127" value="40" id="master-color-amt" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.master.colorAmt = parseInt(this.value); window.editorApp.midi.sendCC(10, 21, this.value);">
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">TONE (CC 22)</span>
+                  <input type="range" min="0" max="127" value="64" id="master-color-tone" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.master.colorTone = parseInt(this.value); window.editorApp.midi.sendCC(10, 22, this.value);">
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">MIX (CC 23)</span>
+                  <input type="range" min="0" max="127" value="40" id="master-color-mix" style="width:100%; accent-color:var(--accent-orange);" oninput="window.editorApp.state.master.colorMix = parseInt(this.value); window.editorApp.midi.sendCC(10, 23, this.value);">
+                </div>
+              </div>
+            </div>
+
+            <!-- Master Dynamics & Sidechain Pump -->
+            <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md);">
+              <h4 style="font-size:12px; font-weight:700; margin-bottom:10px; color:var(--accent-yellow);">DYNAMICS & PUMP</h4>
+              <div class="module-grid-4">
+                <div class="rotary-group">
+                  <span class="rotary-label">PERC (CC 24)</span>
+                  <input type="range" min="0" max="127" value="20" id="master-perc" style="width:100%; accent-color:var(--accent-yellow);" oninput="window.editorApp.state.master.perc = parseInt(this.value); window.editorApp.midi.sendCC(10, 24, this.value);">
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">COMP (CC 26)</span>
+                  <input type="range" min="0" max="127" value="45" id="master-comp" style="width:100%; accent-color:var(--accent-yellow);" oninput="window.editorApp.state.master.comp = parseInt(this.value); window.editorApp.midi.sendCC(10, 26, this.value);">
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">PUMP (CC 27)</span>
+                  <input type="range" min="0" max="127" value="30" id="master-pump" style="width:100%; accent-color:var(--accent-yellow);" oninput="window.editorApp.state.master.pump = parseInt(this.value); window.editorApp.midi.sendCC(10, 27, this.value);">
+                </div>
+                <div class="rotary-group">
+                  <span class="rotary-label">PUMP REL (CC 28)</span>
+                  <input type="range" min="0" max="127" value="60" id="master-pump-rel" style="width:100%; accent-color:var(--accent-yellow);" oninput="window.editorApp.state.master.pumpRel = parseInt(this.value); window.editorApp.midi.sendCC(10, 28, this.value);">
+                </div>
+              </div>
+            </div>
+
+            <!-- Master Output Level -->
+            <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); display:flex; flex-direction:column; justify-content:center;">
+              <span class="rotary-label" style="font-size:12px;">MASTER OUT LEVEL (CC 7)</span>
+              <input type="range" min="0" max="127" value="100" id="master-level" style="width:100%; accent-color:#ffffff; margin:14px 0;" oninput="window.editorApp.state.master.level = parseInt(this.value); window.editorApp.midi.sendCC(10, 7, this.value);">
+              <span id="master-level-val" style="font-family:var(--font-mono); font-size:14px; text-align:center; font-weight:700;">0.0 dB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: 32 SCENES MATRIX -->
+    <section class="tab-pane" id="tab-scenes">
+      <div class="scenes-container">
+        <div class="scenes-toolbar">
+          <div>
+            <h3 style="font-family:var(--font-condensed); font-size:18px; font-weight:700;">🎬 SCENE DIRECTOR</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Trigger scenes instantly via <strong>MIDI Channel 11</strong> (Program Change 0..31 or Notes 36..67 / C1..D#3).
+            </p>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span style="font-size:12px; color:var(--text-muted);">SCENE SWITCH:</span>
+            <select style="background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-subtle); padding:4px 8px; border-radius:var(--radius-sm); font-size:12px;">
+              <option value="bar">Next Bar</option>
+              <option value="end">Pattern End</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="scenes-grid" id="scenes-grid">
+          <!-- 32 Scenes Rendered Dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: VIRTUAL FM-1 HARDWARE & LIVE SCREEN MIRROR -->
+    <section class="tab-pane" id="tab-hardware-mirror">
+      <div class="hardware-mirror-view">
+        <div class="mirror-top-toolbar">
+          <div>
+            <h3 style="font-family:var(--font-condensed); font-size:18px; font-weight:700;">M-VAVE FM-1 HARDWARE REMOTE & MIRROR</h3>
+            <p style="font-size:12px; color:var(--text-muted);">
+              Live 240x240 RGB565 display streaming over USB-MIDI SysEx. Interactive buttons, keys, and encoders.
+            </p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-header" onclick="window.editorApp.midi.sendMirrorRequest(2)">Refresh Screen</button>
+            <button class="btn-header" onclick="window.editorApp.midi.queryScreenReader()">Query Screen Reader</button>
+          </div>
+        </div>
+
+        <!-- Virtual FM-1 Physical Layout Replica -->
+        <div class="virtual-fm1-device">
+          <!-- Live Screen Canvas -->
+          <div class="virtual-screen-viewport">
+            <canvas id="mirror-canvas" width="240" height="240"></canvas>
+          </div>
+
+          <svg viewBox="0 0 1000 640" id="fm1-svg">
+            <!-- Chassis Background -->
+            <rect x="4" y="4" width="992" height="632" rx="44" fill="#3a3d42" stroke="#25272a" stroke-width="4"/>
+
+            <!-- Encoders Group Left -->
+            <g transform="translate(105, 100)">
+              <circle cx="0" cy="0" r="28" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-20" stroke="#f0f2f5" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-36" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">MASTER</text>
+            </g>
+
+            <g transform="translate(215, 100)" style="cursor:pointer;" onclick="window.editorApp.midi.sendEncoderTurn(0, 1)">
+              <circle cx="0" cy="0" r="28" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-20" stroke="#4cc3b6" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-36" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">SELECT</text>
+            </g>
+
+            <g transform="translate(105, 205)" style="cursor:pointer;" onclick="window.editorApp.midi.sendEncoderTurn(2, 1)">
+              <circle cx="0" cy="0" r="28" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-20" stroke="#f28a5a" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-36" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">PRESETS</text>
+            </g>
+
+            <g transform="translate(215, 205)" style="cursor:pointer;" onclick="window.editorApp.midi.sendEncoderTurn(1, 1)">
+              <circle cx="0" cy="0" r="28" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-20" stroke="#f2c744" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-36" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">ALGORITHM</text>
+            </g>
+
+            <!-- Octave Buttons Left -->
+            <g transform="translate(58, 258)">
+              <rect x="0" y="0" width="210" height="58" rx="14" fill="#26282c"/>
+              <g id="hw-btn-OCT-" style="cursor:pointer;">
+                <rect x="14" y="10" width="82" height="38" rx="8" fill="#2e3135" stroke="#4a4d52" stroke-width="1.5"/>
+                <text x="55" y="34" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="15" font-weight="700" fill="#e8e8ea">OCT-</text>
+              </g>
+              <g id="hw-btn-OCT+" style="cursor:pointer;">
+                <rect x="112" y="10" width="82" height="38" rx="8" fill="#2e3135" stroke="#4a4d52" stroke-width="1.5"/>
+                <text x="153" y="34" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="15" font-weight="700" fill="#e8e8ea">OCT+</text>
+              </g>
+            </g>
+
+            <!-- Encoders Group Right (KNOB1 .. KNOB4) -->
+            <g transform="translate(610, 100)" style="cursor:pointer;" onclick="window.editorApp.midi.sendEncoderTurn(3, 1)">
+              <circle cx="0" cy="0" r="26" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-18" stroke="#f0f2f5" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-34" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="13" font-weight="700" fill="#e8e8ea">KNOB 1</text>
+            </g>
+            <g transform="translate(714, 100)" style="cursor:pointer;" onclick="window.editorApp.midi.sendEncoderTurn(4, 1)">
+              <circle cx="0" cy="0" r="26" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-18" stroke="#f0f2f5" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-34" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="13" font-weight="700" fill="#e8e8ea">KNOB 2</text>
+            </g>
+            <g transform="translate(818, 100)" style="cursor:pointer;" onclick="window.editorApp.midi.sendEncoderTurn(5, 1)">
+              <circle cx="0" cy="0" r="26" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-18" stroke="#f0f2f5" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-34" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="13" font-weight="700" fill="#e8e8ea">KNOB 3</text>
+            </g>
+            <g transform="translate(922, 100)" style="cursor:pointer;" onclick="window.editorApp.midi.sendEncoderTurn(6, 1)">
+              <circle cx="0" cy="0" r="26" fill="#1f2124" stroke="#44474c" stroke-width="2"/>
+              <line x1="0" y1="0" x2="0" y2="-18" stroke="#f0f2f5" stroke-width="3" stroke-linecap="round"/>
+              <text x="0" y="-34" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="13" font-weight="700" fill="#e8e8ea">KNOB 4</text>
+            </g>
+
+            <!-- 12 Function Buttons (2 rows of 6) -->
+            <rect x="568" y="160" width="400" height="140" rx="18" fill="#26282c"/>
+
+            <!-- Row 1: FX, SEL, ENV, LFO, EDIT, GLO -->
+            <g id="hw-btn-FX" transform="translate(582, 174)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">FX</text></g>
+            <g id="hw-btn-SEL" transform="translate(645, 174)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">SEL</text></g>
+            <g id="hw-btn-ENV" transform="translate(708, 174)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">ENV</text></g>
+            <g id="hw-btn-LFO" transform="translate(771, 174)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">LFO</text></g>
+            <g id="hw-btn-EDIT" transform="translate(834, 174)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">EDIT</text></g>
+            <g id="hw-btn-GLO" transform="translate(897, 174)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">GLO</text></g>
+
+            <!-- Row 2: HOME, SAVE, ARP, SEQ, PLAY, REC -->
+            <g id="hw-btn-HOME" transform="translate(582, 236)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">HOME</text></g>
+            <g id="hw-btn-SAVE" transform="translate(645, 236)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">SAVE</text></g>
+            <g id="hw-btn-ARP" transform="translate(708, 236)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">ARP</text></g>
+            <g id="hw-btn-SEQ" transform="translate(771, 236)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#e8e8ea">SEQ</text></g>
+            <g id="hw-btn-PLAY" transform="translate(834, 236)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#4cc36a">PLAY</text></g>
+            <g id="hw-btn-REC" transform="translate(897, 236)" style="cursor:pointer;"><rect width="54" height="48" rx="8" fill="#2e3135" stroke="#4a4d52"/><text x="27" y="29" text-anchor="middle" font-family="'Barlow Semi Condensed', sans-serif" font-size="14" font-weight="700" fill="#f25555">REC</text></g>
+
+            <!-- 27-Key Keyboard Bed -->
+            <rect x="36" y="340" width="928" height="270" rx="18" fill="#26282c"/>
+
+            <!-- White Keys (16) -->
+            <g id="white-keys-group">
+              <rect id="hw-key-0" x="48" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-2" x="105" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-4" x="162" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-6" x="219" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-7" x="276" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-9" x="333" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-11" x="390" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-12" x="447" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-14" x="504" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-16" x="561" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-18" x="618" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-19" x="675" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-21" x="732" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-23" x="789" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-24" x="846" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+              <rect id="hw-key-26" x="903" y="450" width="45" height="145" rx="10" fill="#d9dadc" stroke="#25272a" style="cursor:pointer;"/>
+            </g>
+
+            <!-- Black Keys (11 Drumline Sounds) -->
+            <g id="black-keys-group">
+              <rect id="hw-key-1" x="83" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+              <rect id="hw-key-3" x="140" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+              <rect id="hw-key-5" x="197" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+
+              <rect id="hw-key-8" x="311" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+              <rect id="hw-key-10" x="368" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+
+              <rect id="hw-key-13" x="482" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+              <rect id="hw-key-15" x="539" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+              <rect id="hw-key-17" x="596" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+
+              <rect id="hw-key-20" x="710" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+              <rect id="hw-key-22" x="767" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+              <rect id="hw-key-25" x="881" y="358" width="38" height="88" rx="8" fill="#1c1d20" stroke="#4cc3b6" stroke-width="1.5" style="cursor:pointer;"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Live Screen Reader Output Display -->
+        <div class="screen-reader-log-box">
+          <span style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:0.05em;">SCREEN READER ACCESSIBILITY TEXT:</span>
+          <div class="screen-reader-text" id="screen-reader-output">Ready. No screen reader messages received yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 7: PROJECTS & PRESETS -->
+    <section class="tab-pane" id="tab-presets">
+      <div style="max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:20px;">
+        <div class="deck-module">
+          <div class="module-title-bar">
+            <span class="module-title">💾 PROJECT BACKUP & EXPORT</span>
+            <span class="module-badge">JSON & FLASH</span>
+          </div>
+          <p style="color:var(--text-muted); font-size:13px;">
+            Export or import all 8 tracks, synth parameters, drum settings, FX racks, and 32 scenes to JSON files.
+          </p>
+          <div style="display:flex; gap:12px; margin-top:12px;">
+            <button class="btn-header primary" onclick="window.editorApp.exportProjectJSON()">Export Project JSON</button>
+            <input type="file" id="import-json-file" style="display:none;" accept=".json" onchange="window.editorApp.importProjectJSON(this.files[0])">
+            <button class="btn-header" onclick="document.getElementById('import-json-file').click()">Import Project JSON</button>
+          </div>
+        </div>
+
+        <div class="deck-module">
+          <div class="module-title-bar">
+            <span class="module-title">📦 LOOM-8 FIRMWARE FLASH BACKUP & SAMPLES</span>
+            <span class="module-badge">USB-MIDI SYSEX</span>
+          </div>
+          <p style="color:var(--text-muted); font-size:13px; line-height:1.6;">
+            LOOM-8 supports complete project backups (the user presets and 3 project slots) and custom WAV sample bank upload (216 KB flash). You can use Charles Vestal's web backup utility or the command-line scripts:
+          </p>
+          <div style="background:#111215; padding:12px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:12px; color:var(--accent-teal); line-height:1.5;">
+            python tools/loom_samples.py build bank.bin sample1.wav sample2.wav<br>
+            python tools/loom_samples.py upload bank.bin
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 8: MIDI MONITOR & DIAGNOSTICS -->
+    <section class="tab-pane" id="tab-midi-monitor">
+      <div class="midi-monitor-container">
+        <div class="monitor-toolbar">
+          <div>
+            <h3 style="font-family:var(--font-condensed); font-size:16px; font-weight:700;">📊 LIVE MIDI ACTIVITY LOG</h3>
+            <span style="font-size:12px; color:var(--text-muted);">Real-time monitoring of CC, Program Change, Notes, and SysEx traffic</span>
+          </div>
+          <button class="btn-header" onclick="document.getElementById('monitor-tbody').innerHTML = ''">Clear Log</button>
+        </div>
+
+        <div class="monitor-table-wrapper">
+          <table class="monitor-table">
+            <thead>
+              <tr>
+                <th style="width:110px;">Time</th>
+                <th style="width:70px;">Dir</th>
+                <th style="width:140px;">Raw Bytes</th>
+                <th>Decoded Event / Parameter</th>
+              </tr>
+            </thead>
+            <tbody id="monitor-tbody">
+              <!-- Events appended dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ====================================================================
+       4. FOOTER
+       ==================================================================== -->
+  <footer class="app-footer">
+    <div>
+      <strong>LOOM-8 Web Editor</strong> for M-VAVE FM-1 &bull; Firmware by <a href="https://github.com/charlesvestal/fm1-loom" target="_blank" rel="noopener">Charles Vestal</a>
+    </div>
+    <div style="font-family:var(--font-mono); font-size:11px;">
+      Web MIDI 1.0 &bull; 240x240 RGB565 Mirror &bull; Web Audio Engine
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
